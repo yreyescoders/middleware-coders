@@ -68,6 +68,33 @@ app.post("/services", (req, res) => {
 			res.status(400);
 		});
 });
+app.post("/careers", (req, res) => {
+	const data = req.body;
+	const axios = require("axios");
+
+	let config = {
+		method: "post",
+		maxBodyLength: Infinity,
+		url: "https://api.hsforms.com/submissions/v3/integration/secure/submit/39551391/b7e817f7-c366-41ea-8da5-401b854d878d",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${process.env.TOKEN}`,
+		},
+		data: data,
+	};
+
+	axios
+		.request(config)
+		.then((response) => {
+			//res.send({ message: "OK" });
+			//res.status(200);
+			res.send(JSON.stringify(response.data));
+		})
+		.catch((error) => {
+			res.send({ message: "KO", error: error });
+			res.status(400);
+		});
+});
 
 app.get("/", (req, res) => {
 	// We will be coding here
