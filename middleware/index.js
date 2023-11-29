@@ -43,13 +43,4 @@ app.post("/subscription", (req, res) => {
 		});
 });
 
-app.get("/", (req, res) => {
-	// We will be coding here
-	const datosForm = req.body;
-
-	console.log(req.body);
-
-	res.sendFile(__dirname + "/index.html");
-});
-
 app.listen(5000, () => console.log("Server started at http://localhost:5000"));
