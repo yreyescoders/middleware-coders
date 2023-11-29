@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const cors = require("cors");
 var cookieParser = require("cookie-parser");
-
+var dotenv = require("dotenv").config();
 app.use(cookieParser());
 
 app.use(cors());
@@ -24,7 +24,7 @@ app.post("/subscription", (req, res) => {
 		url: "https://api.hsforms.com/submissions/v3/integration/secure/submit/39551391/a3a2dc8e-37b3-46ca-9cc1-295d181cad87",
 		headers: {
 			"Content-Type": "application/json",
-			Authorization: "Bearer pat-na1-233392eb-0d28-4028-8ccd-d577ece3f431",
+			Authorization: `Bearer ${process.env.TOKEN}`,
 		},
 		data: data,
 	};
@@ -41,6 +41,16 @@ app.post("/subscription", (req, res) => {
 			res.status(400);
 			console.log(error);
 		});
+});
+
+app.get("/", (req, res) => {
+	// We will be coding here
+
+	const datosForm = req.body;
+
+	console.log(req.body);
+
+	res.sendFile(__dirname + "/index.html");
 });
 
 app.listen(5000, () => console.log("Server started at http://localhost:5000"));
