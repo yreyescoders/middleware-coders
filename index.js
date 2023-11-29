@@ -37,9 +37,35 @@ app.post("/subscription", (req, res) => {
 			res.send(JSON.stringify(response.data));
 		})
 		.catch((error) => {
-			res.send({ message: "KO" });
+			res.send({ message: "KO", error: error });
 			res.status(400);
-			console.log(error);
+		});
+});
+app.post("/services", (req, res) => {
+	const data = req.body;
+	const axios = require("axios");
+
+	let config = {
+		method: "post",
+		maxBodyLength: Infinity,
+		url: "https://api.hsforms.com/submissions/v3/integration/secure/submit/39551391/1f2bf0c8-f44f-4480-bc28-85f75ba2d142",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${process.env.TOKEN}`,
+		},
+		data: data,
+	};
+
+	axios
+		.request(config)
+		.then((response) => {
+			//res.send({ message: "OK" });
+			//res.status(200);
+			res.send(JSON.stringify(response.data));
+		})
+		.catch((error) => {
+			res.send({ message: "KO", error: error });
+			res.status(400);
 		});
 });
 
