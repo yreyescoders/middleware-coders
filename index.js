@@ -291,11 +291,21 @@ app.post("/api/chatbot", async (req, res) => {
 
     res.json({ reply: trimmedReply });
   } catch (error) {
-    console.error(
-      "Error calling OpenAI API:",
-      error.response?.data || error.message
-    );
-    res.status(500).json({ error: "Error getting chatbot response" });
+    if (error.response) {
+      // El servidor respondió con un código de estado fuera del rango 2xx
+      console.error("Error en la respuesta del servidor:", error.response.data);
+      res
+        .status(error.response.status)
+        .json({ error: "Error en la respuesta del servidor" });
+    } else if (error.request) {
+      // La solicitud se hizo pero no se recibió respuesta
+      console.error("No se recibió respuesta del servidor:", error.request);
+      res.status(500).json({ error: "No se recibió respuesta del servidor" });
+    } else {
+      // Algo sucedió en la configuración de la solicitud que causó el error
+      console.error("Error de configuración de la solicitud:", error.message);
+      res.status(500).json({ error: "Error de configuración de la solicitud" });
+    }
   }
 });
 
