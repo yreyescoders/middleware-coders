@@ -8,12 +8,17 @@ const OpenAI = require("openai");
 var cookieParser = require("cookie-parser");
 var dotenv = require("dotenv").config();
 
+const fileUpload = require("express-fileupload");
+var FormData = require("form-data");
+
 app.use(cookieParser());
 
 app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+app.use(fileUpload());
 
 app.post("/subscription", (req, res) => {
 	const data = req.body;
@@ -94,6 +99,57 @@ app.post("/careers", (req, res) => {
 		.catch((error) => {
 			res.send({ message: "KO", error: error });
 			res.status(400);
+		});
+});
+app.post("/upload", async (req, res) => {
+	if (!req.files || Object.keys(req.files).length === 0) {
+		console.log(req.files);
+		return res.status(400).send("No files were uploaded.");
+	}
+
+	const sampleFile = req.files.file;
+	console.log(sampleFile);
+	const fileOptions = {
+		access: "PUBLIC_INDEXABLE",
+		ttl: "P3M",
+		overwrite: false,
+		duplicateValidationStrategy: "NONE",
+		duplicateValidationScope: "ENTIRE_PORTAL",
+	};
+
+	const data = new FormData();
+	//.append("file", sampleFile.data);
+	data.append("file", sampleFile.data, sampleFile.name);
+	data.append("folderId", "152332940387");
+	data.append(
+		"options",
+		'{\n  "access": "PUBLIC_INDEXABLE",\n  "ttl": "P3M",\n  "overwrite": false,\n  "duplicateValidationStrategy": "NONE",\n  "duplicateValidationScope": "ENTIRE_PORTAL"\n}\n',
+		{ contentType: "application/json" }
+	);
+
+	let config = {
+		method: "post",
+		maxBodyLength: Infinity,
+		url: "https://api.hubapi.com/files/v3/files",
+		headers: {
+			Authorization: `Bearer ${process.env.TOKEN}`,
+			...data.getHeaders(),
+		},
+		data: data,
+	};
+
+	axios
+		.request(config)
+		.then((response) => {
+			console.log(response.status);
+			if (response.status === 201) {
+				res.send({ message: "OK", data: response.data });
+			} else {
+				res.send(JSON.stringify(response.data));
+			}
+		})
+		.catch((error) => {
+			res.send(error);
 		});
 });
 app.post("/expertise", (req, res) => {
