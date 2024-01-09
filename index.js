@@ -4,13 +4,22 @@ const { addAbortSignal } = require("stream");
 const bodyParser = require("body-parser");
 const app = express();
 const cors = require("cors");
+const fs = require("fs");
 const OpenAI = require("openai");
 var cookieParser = require("cookie-parser");
 var dotenv = require("dotenv").config();
+const fileUpload = require("express-fileupload");
+var request = require("request");
+var FormData = require("form-data");
+const path = require("path");
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use(cookieParser());
 
 app.use(cors());
+
+// default options
+app.use(fileUpload());
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -69,6 +78,58 @@ app.post("/services", (req, res) => {
 			res.status(400);
 		});
 });
+
+app.post("/upload", async (req, res) => {
+	if (!req.files || Object.keys(req.files).length === 0) {
+		return res.status(400).send("No files were uploaded.");
+	}
+
+	const sampleFile = req.files.file;
+	console.log(sampleFile);
+	const fileOptions = {
+		access: "PUBLIC_INDEXABLE",
+		ttl: "P3M",
+		overwrite: false,
+		duplicateValidationStrategy: "NONE",
+		duplicateValidationScope: "ENTIRE_PORTAL",
+	};
+
+	const data = new FormData();
+	//.append("file", sampleFile.data);
+	data.append("file", sampleFile.data, sampleFile.name);
+	data.append("folderId", "152332940387");
+	data.append(
+		"options",
+		'{\n  "access": "PUBLIC_INDEXABLE",\n  "ttl": "P3M",\n  "overwrite": false,\n  "duplicateValidationStrategy": "NONE",\n  "duplicateValidationScope": "ENTIRE_PORTAL"\n}\n',
+		{ contentType: "application/json" }
+	);
+
+	let config = {
+		method: "post",
+		maxBodyLength: Infinity,
+		url: "https://api.hubapi.com/files/v3/files",
+		headers: {
+			Authorization: `Bearer ${process.env.TOKEN}`,
+			...data.getHeaders(),
+		},
+		data: data,
+	};
+
+	axios
+		.request(config)
+		.then((response) => {
+			console.log(response.status);
+			if (response.status === 201) {
+				res.send({ message: "OK", data: response.data });
+			} else {
+				res.send(JSON.stringify(response.data));
+			}
+		})
+		.catch((error) => {
+			res.send(error);
+		});
+});
+
 app.post("/careers", (req, res) => {
 	const data = req.body;
 	const axios = require("axios");
@@ -84,6 +145,8 @@ app.post("/careers", (req, res) => {
 		data: data,
 	};
 
+	console.log(data);
+	//res.send({ message: data, error: "error" });
 	axios
 		.request(config)
 		.then((response) => {
@@ -129,12 +192,14 @@ app.get("/", (req, res) => {
 
 	const datosForm = req.body;
 
-	console.log(req.body);
-	console.log("Token:", process.env.TOKEN);
 	res.sendFile(__dirname + "/index.html");
-	console.log("Token:", process.env.TOKEN);
 });
 app.use(express.json());
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+	console.log(`Server is running on port ${PORT}`);
+});
 
 app.post("/api/chatbot", async (req, res) => {
 	const { message } = req.body;
